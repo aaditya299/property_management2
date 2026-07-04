@@ -86,6 +86,31 @@ def approve_application(action: ApprovalAction):
     conn.commit()
     return {"message": f"Success! {name} has been approved and moved to active tenants."}
         
-    
     cursor.close()
     conn.close()
+
+@app.get("/admin/applications")
+def get_pending_applications():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+       SELECT 
+        a.application_id, 
+        a.applicant_name, 
+        a.contact_email, 
+        a.status, 
+        p.address AS property_address,
+        p.city AS property_city
+        FROM applications a 
+        INNER JOIN properties p ON a.property_id = p.property_id
+        WHERE a.status = 'Pending' 
+        ORDER BY a.application_id ASC;
+        """)
+        
+    pending_apps = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {'pending_applications': pending_apps}
+     
+    
