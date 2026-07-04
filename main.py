@@ -54,3 +54,38 @@ def apply_to_rent(req: ApplicationRequest):
     conn.close()
 
     return {"message": "Application submitted successfully", "application_id": new_id}
+
+class ApprovalAction(BaseModel):
+    application_id: int
+
+@app.post("/admin/approve")
+def approve_application(action: ApprovalAction):
+    conn=get_db_connection()
+    cursor=conn.cursor()
+
+    cursor.execute("""
+    select property_id, applicant_name from applications
+    where application_id=%s and status='Pending';"""
+    , (action.application_id,))
+    app_record=cursor.fetchone()
+
+    if not app_record:
+        cursor.close()
+        conn.close()
+        raise HTTPException(status_code=404,detail="Pending application record not found")
+    
+    pid = app_record['property_id']
+    name = app_record['applicant_name']
+    
+    cursor.execute("UPDATE applications SET status = 'Approved' WHERE application_id = %s;", (action.application_id,))
+    cursor.execute("UPDATE properties SET status = 'Full' WHERE property_id = %s;", (pid,))
+    cursor.execute("""
+        INSERT INTO tenants (property_id, tenant_name, payment_status)
+        VALUES (%s, %s, 'Unpaid');
+    """, (pid, name))
+    conn.commit()
+    return {"message": f"Success! {name} has been approved and moved to active tenants."}
+        
+    
+    cursor.close()
+    conn.close()
