@@ -84,10 +84,10 @@ def approve_application(action: ApprovalAction):
         VALUES (%s, %s, 'Unpaid');
     """, (pid, name))
     conn.commit()
-    return {"message": f"Success! {name} has been approved and moved to active tenants."}
-        
+    
     cursor.close()
     conn.close()
+    return {"message": f"Success! {name} has been approved and moved to active tenants."}
 
 @app.get("/admin/applications")
 def get_pending_applications():
