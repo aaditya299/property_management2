@@ -4,8 +4,17 @@ from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 app = FastAPI()
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 database_url =os.getenv("DATABASE_URL")
 
 def get_db_connection():
